@@ -234,6 +234,10 @@ grant select, insert, update, delete on public.subjects to authenticated;
 grant select, insert, update, delete on public.grades to authenticated;
 grant select on public.history to authenticated;
 grant execute on function public.signup_open() to anon, authenticated;
+-- Trigger functions are never called directly through the API.
+revoke execute on function public.check_signup_allowed(), public.create_profile(),
+  public.archive_previous_years(), public.log_year(), public.log_subject(), public.log_grade()
+  from public, anon, authenticated;
 
 -- settings: admin only
 create policy settings_admin_read on public.settings
@@ -277,6 +281,8 @@ language sql stable security definer set search_path = public as $$
     select 1 from public.subjects s join public.years y on y.id = s.year_id
     where s.id = sid and not y.archived)
 $$;
+revoke execute on function public.subject_is_active(bigint) from public, anon;
+grant execute on function public.subject_is_active(bigint) to authenticated;
 
 create policy grades_read on public.grades
   for select to authenticated using (user_id = auth.uid() or public.is_admin());

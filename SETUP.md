@@ -1,59 +1,48 @@
-# Setup (one time, about 15 minutes)
+# Setup
 
-Everything here is free. These are the steps only Ramon can do, because they need his accounts.
+The Supabase project (`gradesapp`, Zurich, free plan) and its database are already created, and the app's
+public Supabase settings are in [`.env.production`](.env.production). Three things are left that only
+Ramon can do, all doable from a phone browser.
 
-## 1. Create the Supabase project
+## 1. Supabase login settings
 
-1. Go to https://supabase.com, sign in (GitHub login works) and click **New project**.
-2. Pick any name (e.g. `gradesapp`), set a strong database password (save it somewhere), choose a region close to you (e.g. *Central EU (Zurich)*), plan **Free**. Create it and wait until it is ready.
+Open https://supabase.com/dashboard/project/ftdvnutmwhzifrnszfgv
 
-## 2. Create the database
-
-1. In the project, open **SQL Editor → New query**.
-2. Open [`supabase/schema.sql`](supabase/schema.sql) in this repo, copy all of it, paste it, and click **Run**. It should say "Success. No rows returned".
-
-## 3. Configure logins
-
-1. **Authentication → Sign In / Providers → Email**:
-   - keep **Email** enabled;
-   - turn **Confirm email** **off** (the spec says the only emails ever sent are password resets). Save.
-2. **Authentication → Sign In / Providers** (top section): keep **Allow new users to sign up** **on**. The app's own open/close switch in your dashboard controls who can sign up.
-3. **Authentication → URL Configuration**:
+1. **Authentication → Sign In / Providers → Email**: turn **Confirm email** **off** and save
+   (the spec says the only emails ever sent are password resets).
+2. **Authentication → URL Configuration**:
    - **Site URL**: `https://ramonpegoretti.github.io/gradesApp/`
-   - **Redirect URLs** → Add URL: `https://ramonpegoretti.github.io/gradesApp/**`
+   - **Redirect URLs → Add URL**: `https://ramonpegoretti.github.io/gradesApp/**`
 
-## 4. Give GitHub the Supabase address and key
+## 2. Turn on GitHub Pages
 
-1. In Supabase, open **Project Settings → API Keys** (or **Data API**) and copy:
-   - the **Project URL** (looks like `https://abcdefgh.supabase.co`);
-   - the **anon public** key (or the **publishable** key, `sb_publishable_…`). Never use the `service_role` / secret key.
-2. On GitHub, open the repo → **Settings → Secrets and variables → Actions → New repository secret** and add:
-   - `VITE_SUPABASE_URL` = the Project URL
-   - `VITE_SUPABASE_ANON_KEY` = the anon / publishable key
+Repo → **Settings → Pages** → **Source: GitHub Actions**. Then **Actions → Deploy to GitHub Pages → Run workflow**
+(or merge any change into `main`). The app is then at https://ramonpegoretti.github.io/gradesApp/
 
-## 5. Turn on GitHub Pages
+## 3. First use
 
-1. Repo → **Settings → Pages** → **Source: GitHub Actions**.
-2. Merge the pull request into `main`. The **Deploy to GitHub Pages** workflow builds and publishes the app (repo → **Actions** shows progress). If you added the secrets after merging, open **Actions → Deploy to GitHub Pages → Run workflow**.
-3. The app is then at https://ramonpegoretti.github.io/gradesApp/
-
-## 6. First use
-
-1. **Sign up yourself first, right away**: https://ramonpegoretti.github.io/gradesApp/#/admin/signup with `ramopego@gmail.com`. (Sign-up starts closed for everyone except this email.)
+1. **Sign up yourself first**: https://ramonpegoretti.github.io/gradesApp/#/admin/signup with `ramopego@gmail.com`.
+   (Sign-up starts closed for everyone except this email.)
 2. In your dashboard: create the year, add her subjects.
 3. Turn the **Sign-up** switch **on**, send her https://ramonpegoretti.github.io/gradesApp/ and let her tap *Registrati*.
 4. Once she is in, turn the switch **off** again.
 
+## Database changes
+
+`supabase/schema.sql` is the full schema (already applied). To rebuild from scratch on a new project,
+run it once in the Supabase SQL Editor and update `.env.production` with the new Project URL and
+publishable key (Project Settings → API Keys). Never put the secret / `service_role` key in the repo.
+
 ## Keeping it awake
 
-Supabase pauses free projects after a week without use. The **Keep Supabase awake** workflow makes one tiny request every Monday. You can run it by hand from **Actions** to check it works (it needs the secrets from step 4).
+Supabase pauses free projects after a week without use. The **Keep Supabase awake** workflow makes one
+tiny request every Monday; you can run it by hand from **Actions** to check it works.
 
 ## Local development (optional)
 
 ```sh
-cp .env.example .env.local   # fill in the URL and key
 npm install
-npm run dev                  # http://localhost:5173/gradesApp/
+npm run dev    # http://localhost:5173/gradesApp/ (uses .env.production values unless .env.local overrides them)
 ```
 
 For password-reset links to work locally, also add `http://localhost:5173/**` to the Supabase Redirect URLs.
