@@ -36,7 +36,7 @@ publishable key (Project Settings → API Keys). Never put the secret / `service
 ## Keeping it awake
 
 Supabase pauses free projects after a week without use. The **Keep Supabase awake** workflow makes one
-tiny request every Monday; you can run it by hand from **Actions** to check it works.
+tiny request every day; you can run it by hand from **Actions** to check it works.
 
 ## Local development (optional)
 
