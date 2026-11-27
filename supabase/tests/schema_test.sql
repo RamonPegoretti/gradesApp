@@ -78,7 +78,7 @@ select t.must_fail($$insert into public.grades (subject_id, value) select id, 5 
 select t.login('ramopego@gmail.com');
 select t.check(
   (select string_agg(action, ',' order by id) from public.history) =
-  'year_created,subject_added,subject_added,subject_renamed,grade_added,grade_added,grade_added,grade_edited,grade_deleted,subject_deleted,year_created',
+  'year_created,subject_added,subject_added,subject_renamed,grade_added,grade_added,grade_added,grade_edited,grade_deleted,grade_added,grade_deleted,subject_deleted,year_created',
   'history actions');
 select t.check(
   (select old_value = 5.25 and new_value = 4.5 and actor_email = 'student@example.com'
