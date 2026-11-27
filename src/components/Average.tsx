@@ -1,7 +1,8 @@
-import { format2, roundQuarter } from '../lib/grades';
+import { capAverage, format2, roundQuarter } from '../lib/grades';
 
-/** Subject average: 2 decimals with the quarter-rounded value beside it, or "-" (spec §6.1). */
-export function SubjectAvg({ value, quarterTitle }: { value: number | null; quarterTitle?: string }) {
+/** Subject average: 2 decimals with the quarter-rounded value beside it, or "-" (spec §6.1). Takes the real average and shows it capped at 6. */
+export function SubjectAvg({ value: real, quarterTitle }: { value: number | null; quarterTitle?: string }) {
+  const value = capAverage(real);
   if (value === null) return <span className="avg">-</span>;
   return (
     <span className="avg">

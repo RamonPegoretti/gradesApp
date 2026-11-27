@@ -48,7 +48,9 @@ insert into public.grades (subject_id, value, weight) select id, 4, 2 from publi
 insert into public.grades (subject_id, value, weight) select id, 6, 0 from public.subjects where name = 'History';
 update public.grades set value = 4.5 where value = 5.25;
 delete from public.grades where value = 6;
-select t.must_fail($$insert into public.grades (subject_id, value) select id, 6.5 from public.subjects limit 1$$);
+insert into public.grades (subject_id, value) select id, 6.5 from public.subjects where name = 'Maths';
+delete from public.grades where value = 6.5;
+select t.must_fail($$insert into public.grades (subject_id, value) select id, -0.25 from public.subjects limit 1$$);
 select t.must_fail($$insert into public.grades (subject_id, value, weight) select id, 5, -1 from public.subjects limit 1$$);
 select t.must_fail($$insert into public.subjects (year_id, name) select id, 'X' from public.years$$);
 select t.must_fail($$insert into public.years (name) values ('Y2')$$);
@@ -76,7 +78,7 @@ select t.must_fail($$insert into public.grades (subject_id, value) select id, 5 
 select t.login('ramopego@gmail.com');
 select t.check(
   (select string_agg(action, ',' order by id) from public.history) =
-  'year_created,subject_added,subject_added,subject_renamed,grade_added,grade_added,grade_added,grade_edited,grade_deleted,subject_deleted,year_created',
+  'year_created,subject_added,subject_added,subject_renamed,grade_added,grade_added,grade_added,grade_edited,grade_deleted,grade_added,grade_deleted,subject_deleted,year_created',
   'history actions');
 select t.check(
   (select old_value = 5.25 and new_value = 4.5 and actor_email = 'student@example.com'

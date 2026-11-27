@@ -14,7 +14,7 @@ export type ParseResult =
 
 const NUMBER_RE = /^(\d+(\.\d*)?|\.\d+)$/;
 
-/** Parses a grade typed by the student: any decimal 0–6, or a whole number with + / - (±0.25). */
+/** Parses a grade typed by the student: any decimal from 0 up (no upper limit), or a whole number with + / - (±0.25). */
 export function parseGrade(input: string): ParseResult {
   const s = input.trim();
   if (s === '') return { ok: false, error: 'empty' };
@@ -26,7 +26,7 @@ export function parseGrade(input: string): ParseResult {
   if (sign !== 0 && !/^\d+$/.test(body)) return { ok: false, error: 'sign_decimal' };
 
   const value = Number(body) + sign * 0.25;
-  if (!(value >= 0 && value <= 6)) return { ok: false, error: 'range' };
+  if (!(value >= 0)) return { ok: false, error: 'range' };
   return { ok: true, value };
 }
 
@@ -63,7 +63,7 @@ export const format2 = (x: number) => round2(x).toFixed(2);
 /** Raw stored number as the student entered it ("4.37", "5", "5.25"). */
 export const formatRaw = (x: number) => String(Number(x));
 
-/** Weighted average Σ(grade×weight)/Σ(weight); null when there is no counting grade. */
+/** Real weighted average Σ(grade×weight)/Σ(weight), not capped (cap it with capAverage to show it); null when there is no counting grade. */
 export function subjectAverage(grades: Pick<Grade, 'value' | 'weight'>[]): number | null {
   let sum = 0;
   let weights = 0;
@@ -74,21 +74,28 @@ export function subjectAverage(grades: Pick<Grade, 'value' | 'weight'>[]): numbe
   return weights > 0 ? sum / weights : null;
 }
 
-/** Mean of the exact subject averages, each subject counting equally; subjects without an average are left out. */
+/** Averages are shown at most 6, even though single grades can go above 6. */
+export const AVERAGE_MAX = 6;
+export const capAverage = (x: number | null): number | null => (x === null ? null : Math.min(AVERAGE_MAX, x));
+
+/**
+ * Mean of the exact (real, uncapped) subject averages, each subject counting equally;
+ * subjects without an average are left out. The result is then capped at 6.
+ */
 export function overallAverage(subjectAverages: (number | null)[]): number | null {
   const counted = subjectAverages.filter((a): a is number => a !== null);
   if (counted.length === 0) return null;
-  return counted.reduce((a, b) => a + b, 0) / counted.length;
+  return capAverage(counted.reduce((a, b) => a + b, 0) / counted.length);
 }
 
 export type TargetResult =
   | { kind: 'needed'; value: number }
-  | { kind: 'unreachable' }
   | { kind: 'achieved' };
 
 /**
  * Grade needed on each of the N remaining grades (weight 1 each) to reach the target:
  * needed = (target × (W + N) − S) / N.
+ * A needed grade above 6 is shown as it is (grades have no upper limit).
  */
 export function neededGrade(
   grades: Pick<Grade, 'value' | 'weight'>[],
@@ -103,25 +110,25 @@ export function neededGrade(
   }
   const needed = (target * (w + remaining) - s) / remaining;
   const eps = 1e-9;
-  if (needed > 6 + eps) return { kind: 'unreachable' };
   if (needed < -eps) return { kind: 'achieved' };
   return { kind: 'needed', value: Math.max(0, needed) };
 }
 
-// Distribution bands (spec §7.3d): below 4, 4–4.75, 5–5.75, 6.
+// Distribution bands (spec §7.3d): below 4, 4–4.75, 5–5.75, 6, above 6.
 // OPEN QUESTION for Ramon: the spec's bands leave gaps for free decimals (e.g. 4.8 or 5.9).
-// Until he decides, a band runs up to the next band's start: [4, 5), [5, 6), and 6 exactly.
-export const BANDS = ['< 4', '4 – 4.75', '5 – 5.75', '6'] as const;
+// Until he decides, a band runs up to the next band's start: [4, 5), [5, 6), 6 exactly, then > 6.
+export const BANDS = ['< 4', '4 – 4.75', '5 – 5.75', '6', '> 6'] as const;
 
 export function bandIndex(value: number): number {
   if (value < 4) return 0;
   if (value < 5) return 1;
   if (value < 6) return 2;
-  return 3;
+  if (value === 6) return 3;
+  return 4;
 }
 
 export function distribution(grades: Pick<Grade, 'value'>[]): number[] {
-  const counts = [0, 0, 0, 0];
+  const counts = BANDS.map(() => 0);
   for (const g of grades) counts[bandIndex(Number(g.value))]++;
   return counts;
 }

@@ -46,7 +46,7 @@ create table public.grades (
   id bigint generated always as identity primary key,
   subject_id bigint not null references public.subjects (id) on delete cascade,
   user_id uuid not null default auth.uid() references auth.users (id) on delete cascade,
-  value numeric not null check (value >= 0 and value <= 6),
+  value numeric not null check (value >= 0),
   weight numeric not null default 1 check (weight >= 0),
   created_at timestamptz not null default now()
 );
