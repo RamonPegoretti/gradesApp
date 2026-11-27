@@ -33,6 +33,8 @@ const tooltip = {
 };
 const passLine = <ReferenceLine y={4} stroke={C.pass} strokeDasharray="4 4" />;
 
+const wholeTicks = (max: number) => Array.from({ length: max + 1 }, (_, i) => i);
+
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="card">
@@ -61,6 +63,8 @@ export function Charts() {
   const subjectLine = selected
     ? grades.filter((g) => g.subject_id === selected.id).map((g, i) => ({ n: i + 1, voto: g.value, peso: g.weight }))
     : [];
+  // Grades have no upper limit, so the axis grows past 6 when a grade does.
+  const subjectMax = Math.max(6, Math.ceil(Math.max(0, ...subjectLine.map((p) => Number(p.voto)))));
 
   // c. overall average as grades were added
   const timeline = overallTimeline(grades).map((v, i) => ({ n: i + 1, media: v === null ? null : round2(v) }));
@@ -106,7 +110,7 @@ export function Charts() {
             <LineChart data={subjectLine} margin={{ left: -16, right: 16, top: 8 }}>
               <CartesianGrid vertical={false} stroke={C.grid} />
               <XAxis dataKey="n" {...axis} allowDecimals={false} />
-              <YAxis domain={[0, 6]} ticks={[0, 1, 2, 3, 4, 5, 6]} {...axis} />
+              <YAxis domain={[0, subjectMax]} ticks={wholeTicks(subjectMax)} {...axis} />
               <Tooltip
                 {...tooltip}
                 labelFormatter={(n) => `Voto n. ${n}`}

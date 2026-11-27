@@ -14,7 +14,7 @@ export type ParseResult =
 
 const NUMBER_RE = /^(\d+(\.\d*)?|\.\d+)$/;
 
-/** Parses a grade typed by the student: any decimal 0–6, or a whole number with + / - (±0.25). */
+/** Parses a grade typed by the student: any decimal from 0 up (no upper limit), or a whole number with + / - (±0.25). */
 export function parseGrade(input: string): ParseResult {
   const s = input.trim();
   if (s === '') return { ok: false, error: 'empty' };
@@ -26,7 +26,7 @@ export function parseGrade(input: string): ParseResult {
   if (sign !== 0 && !/^\d+$/.test(body)) return { ok: false, error: 'sign_decimal' };
 
   const value = Number(body) + sign * 0.25;
-  if (!(value >= 0 && value <= 6)) return { ok: false, error: 'range' };
+  if (!(value >= 0)) return { ok: false, error: 'range' };
   return { ok: true, value };
 }
 
@@ -83,12 +83,12 @@ export function overallAverage(subjectAverages: (number | null)[]): number | nul
 
 export type TargetResult =
   | { kind: 'needed'; value: number }
-  | { kind: 'unreachable' }
   | { kind: 'achieved' };
 
 /**
  * Grade needed on each of the N remaining grades (weight 1 each) to reach the target:
  * needed = (target × (W + N) − S) / N.
+ * A needed grade above 6 is shown as it is (grades have no upper limit).
  */
 export function neededGrade(
   grades: Pick<Grade, 'value' | 'weight'>[],
@@ -103,7 +103,6 @@ export function neededGrade(
   }
   const needed = (target * (w + remaining) - s) / remaining;
   const eps = 1e-9;
-  if (needed > 6 + eps) return { kind: 'unreachable' };
   if (needed < -eps) return { kind: 'achieved' };
   return { kind: 'needed', value: Math.max(0, needed) };
 }

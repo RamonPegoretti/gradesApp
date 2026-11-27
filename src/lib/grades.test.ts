@@ -14,7 +14,9 @@ import {
 } from './grades';
 
 describe('parseGrade', () => {
-  it('accepts any decimal from 0 to 6', () => {
+  it('accepts any decimal from 0 up, with no upper limit', () => {
+    expect(parseGrade('7')).toEqual({ ok: true, value: 7 });
+    expect(parseGrade('12.5')).toEqual({ ok: true, value: 12.5 });
     expect(parseGrade('4.37')).toEqual({ ok: true, value: 4.37 });
     expect(parseGrade('0')).toEqual({ ok: true, value: 0 });
     expect(parseGrade('6')).toEqual({ ok: true, value: 6 });
@@ -25,16 +27,17 @@ describe('parseGrade', () => {
     expect(parseGrade('5+')).toEqual({ ok: true, value: 5.25 });
     expect(parseGrade('6-')).toEqual({ ok: true, value: 5.75 });
     expect(parseGrade('1-')).toEqual({ ok: true, value: 0.75 });
+    expect(parseGrade('6+')).toEqual({ ok: true, value: 6.25 });
+    expect(parseGrade('7-')).toEqual({ ok: true, value: 6.75 });
+    expect(parseGrade('7+')).toEqual({ ok: true, value: 7.25 });
   });
 
   it('rejects a sign on a non-whole number', () => {
     expect(parseGrade('4.5+')).toEqual({ ok: false, error: 'sign_decimal' });
   });
 
-  it('rejects values outside 0–6', () => {
-    expect(parseGrade('6+')).toEqual({ ok: false, error: 'range' });
+  it('rejects values below 0', () => {
     expect(parseGrade('0-')).toEqual({ ok: false, error: 'range' });
-    expect(parseGrade('7')).toEqual({ ok: false, error: 'range' });
   });
 
   it('rejects junk, empty and comma decimals', () => {
@@ -95,8 +98,9 @@ describe('neededGrade', () => {
     expect(neededGrade(grades, 5, 2)).toEqual({ kind: 'needed', value: 5.5 });
   });
 
-  it('is unreachable above 6', () => {
-    expect(neededGrade(grades, 5.5, 1)).toEqual({ kind: 'unreachable' });
+  it('shows the needed grade even above 6', () => {
+    // (5.5 × 3 − 9) / 1 = 7.5
+    expect(neededGrade(grades, 5.5, 1)).toEqual({ kind: 'needed', value: 7.5 });
   });
 
   it('is already achieved below 0', () => {

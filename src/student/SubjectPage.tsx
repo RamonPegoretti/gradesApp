@@ -20,7 +20,7 @@ const gradeErrors: Record<Exclude<ParseResult, { ok: true }>['error'], string> =
   comma: 'Usa il punto per i decimali (es. 4.5).',
   format: 'Voto non valido.',
   sign_decimal: 'Il segno + o - si può usare solo con numeri interi (es. 5+).',
-  range: 'Il voto deve essere tra 0 e 6.',
+  range: 'Il voto non può essere negativo.',
 };
 
 function GradeForm({
@@ -104,8 +104,6 @@ function TargetCalculator({ grades }: { grades: StoredGrade[] }) {
           <p className="target-result">
             Voto necessario: <strong>{format2(r.value)}</strong>
           </p>
-        ) : r.kind === 'unreachable' ? (
-          <p className="target-result">Non raggiungibile</p>
         ) : (
           <p className="target-result">Obiettivo già raggiunto: qualsiasi voto va bene.</p>
         );
