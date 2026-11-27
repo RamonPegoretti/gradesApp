@@ -11,7 +11,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { BANDS, distribution, format2, formatRaw, overallTimeline, round2, subjectAverage } from '../lib/grades';
+import { BANDS, capAverage, distribution, format2, formatRaw, overallTimeline, round2, subjectAverage } from '../lib/grades';
 import { useStudentData } from './StudentLayout';
 
 // Kept in sync with the CSS tokens in styles.css.
@@ -53,7 +53,7 @@ export function Charts() {
 
   // a. subject averages
   const averages = subjects.map((s) => {
-    const avg = subjectAverage(grades.filter((g) => g.subject_id === s.id));
+    const avg = capAverage(subjectAverage(grades.filter((g) => g.subject_id === s.id)));
     return { name: s.name, media: avg === null ? null : round2(avg) };
   });
   const barHeight = Math.max(160, subjects.length * 36 + 40);

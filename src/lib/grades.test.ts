@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   bandIndex,
+  capAverage,
   distribution,
   format2,
   neededGrade,
@@ -86,6 +87,20 @@ describe('averages', () => {
     expect(overallAverage([5.125, 4.5, null])).toBeCloseTo(4.8125, 10);
     expect(overallAverage([null])).toBeNull();
   });
+
+  it('subject average is real, and shown capped at 6', () => {
+    const real = subjectAverage([{ value: 7, weight: 1 }, { value: 6, weight: 1 }]);
+    expect(real).toBe(6.5);
+    expect(capAverage(real)).toBe(6);
+    expect(capAverage(5.5)).toBe(5.5);
+    expect(capAverage(null)).toBeNull();
+  });
+
+  it('overall average uses the real subject averages, then caps at 6', () => {
+    // real: (7 + 4.5) / 2 = 5.75, not (6 + 4.5) / 2 = 5.25
+    expect(overallAverage([7, 4.5])).toBe(5.75);
+    expect(overallAverage([7, 6.5])).toBe(6);
+  });
 });
 
 describe('neededGrade', () => {
@@ -120,7 +135,9 @@ describe('distribution', () => {
     expect(bandIndex(5)).toBe(2);
     expect(bandIndex(5.75)).toBe(2);
     expect(bandIndex(6)).toBe(3);
-    expect(distribution([{ value: 3 }, { value: 4.5 }, { value: 5.25 }, { value: 6 }, { value: 6 }])).toEqual([1, 1, 1, 2]);
+    expect(bandIndex(6.25)).toBe(4);
+    expect(bandIndex(9)).toBe(4);
+    expect(distribution([{ value: 3 }, { value: 4.5 }, { value: 5.25 }, { value: 6 }, { value: 6 }, { value: 6.25 }])).toEqual([1, 1, 1, 2, 1]);
   });
 });
 
@@ -132,5 +149,13 @@ describe('overallTimeline', () => {
       { id: 2, subject_id: 1, value: 5, weight: 0 },
     ]);
     expect(points).toEqual([6, 6, 5]);
+  });
+
+  it('caps each point at 6', () => {
+    const points = overallTimeline([
+      { id: 1, subject_id: 1, value: 7, weight: 1 },
+      { id: 2, subject_id: 2, value: 4, weight: 1 },
+    ]);
+    expect(points).toEqual([6, 5.5]);
   });
 });

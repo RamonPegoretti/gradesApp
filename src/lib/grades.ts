@@ -63,7 +63,7 @@ export const format2 = (x: number) => round2(x).toFixed(2);
 /** Raw stored number as the student entered it ("4.37", "5", "5.25"). */
 export const formatRaw = (x: number) => String(Number(x));
 
-/** Weighted average Σ(grade×weight)/Σ(weight); null when there is no counting grade. */
+/** Real weighted average Σ(grade×weight)/Σ(weight), not capped (cap it with capAverage to show it); null when there is no counting grade. */
 export function subjectAverage(grades: Pick<Grade, 'value' | 'weight'>[]): number | null {
   let sum = 0;
   let weights = 0;
@@ -74,11 +74,18 @@ export function subjectAverage(grades: Pick<Grade, 'value' | 'weight'>[]): numbe
   return weights > 0 ? sum / weights : null;
 }
 
-/** Mean of the exact subject averages, each subject counting equally; subjects without an average are left out. */
+/** Averages are shown at most 6, even though single grades can go above 6. */
+export const AVERAGE_MAX = 6;
+export const capAverage = (x: number | null): number | null => (x === null ? null : Math.min(AVERAGE_MAX, x));
+
+/**
+ * Mean of the exact (real, uncapped) subject averages, each subject counting equally;
+ * subjects without an average are left out. The result is then capped at 6.
+ */
 export function overallAverage(subjectAverages: (number | null)[]): number | null {
   const counted = subjectAverages.filter((a): a is number => a !== null);
   if (counted.length === 0) return null;
-  return counted.reduce((a, b) => a + b, 0) / counted.length;
+  return capAverage(counted.reduce((a, b) => a + b, 0) / counted.length);
 }
 
 export type TargetResult =
@@ -107,20 +114,21 @@ export function neededGrade(
   return { kind: 'needed', value: Math.max(0, needed) };
 }
 
-// Distribution bands (spec §7.3d): below 4, 4–4.75, 5–5.75, 6.
+// Distribution bands (spec §7.3d): below 4, 4–4.75, 5–5.75, 6, above 6.
 // OPEN QUESTION for Ramon: the spec's bands leave gaps for free decimals (e.g. 4.8 or 5.9).
-// Until he decides, a band runs up to the next band's start: [4, 5), [5, 6), and 6 exactly.
-export const BANDS = ['< 4', '4 – 4.75', '5 – 5.75', '6'] as const;
+// Until he decides, a band runs up to the next band's start: [4, 5), [5, 6), 6 exactly, then > 6.
+export const BANDS = ['< 4', '4 – 4.75', '5 – 5.75', '6', '> 6'] as const;
 
 export function bandIndex(value: number): number {
   if (value < 4) return 0;
   if (value < 5) return 1;
   if (value < 6) return 2;
-  return 3;
+  if (value === 6) return 3;
+  return 4;
 }
 
 export function distribution(grades: Pick<Grade, 'value'>[]): number[] {
-  const counts = [0, 0, 0, 0];
+  const counts = BANDS.map(() => 0);
   for (const g of grades) counts[bandIndex(Number(g.value))]++;
   return counts;
 }
